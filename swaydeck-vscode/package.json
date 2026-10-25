@@ -1,0 +1,103 @@
+{
+  "name": "swaydeck-bridge",
+  "displayName": "SwayDeck Bridge",
+  "description": "Bridge your local SwayDeck PC agent to VS Code: see the detected workspace on your phone and run the project from the deck.",
+  "version": "0.1.0",
+  "publisher": "SwayamSujjalMohanta",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#0b0b0f",
+    "theme": "dark"
+  },
+  "homepage": "https://github.com/SWAYAM31220/swaydeck#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SWAYAM31220/swaydeck.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SWAYAM31220/swaydeck/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "swaydeck",
+    "remote",
+    "remote control",
+    "phone",
+    "adb",
+    "workspace",
+    "project",
+    "run project"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In an untrusted workspace SwayDeck Bridge still connects to the local agent and reports the workspace (name, path, type, trust state), but it refuses to run anything: \"Run project\" returns \"This workspace is not trusted. Trust it in VS Code first.\" No command, terminal or static server is started until you trust the workspace."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "SwayDeck Bridge inspects the workspace root on disk (package.json, main.py, index.html) and runs the project in a terminal whose working directory is the real workspace folder. Virtual workspaces do not provide a real folder on disk."
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "swaydeck.setToken",
+        "title": "SwayDeck: Set Pairing Token"
+      },
+      {
+        "command": "swaydeck.reconnect",
+        "title": "SwayDeck: Reconnect"
+      },
+      {
+        "command": "swaydeck.showWorkspaceInfo",
+        "title": "SwayDeck: Show Workspace Info"
+      },
+      {
+        "command": "swaydeck.showStatus",
+        "title": "SwayDeck: Show Status"
+      },
+      {
+        "command": "swaydeck.runProject",
+        "title": "SwayDeck: Run Project"
+      },
+      {
+        "command": "swaydeck.stopStaticServer",
+        "title": "SwayDeck: Stop Static Server"
+      }
+    ],
+    "configuration": {
+      "title": "SwayDeck",
+      "properties": {
+        "swaydeck.agentUrl": {
+          "type": "string",
+          "default": "ws://127.0.0.1:3000/ext",
+          "markdownDescription": "WebSocket URL of the local SwayDeck PC agent. Only `ws://` URLs on `127.0.0.1` or `localhost` are accepted."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.0",
+    "@types/vscode": "~1.85.0",
+    "@types/ws": "^8.5.10",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,55 @@
+name: Feature request
+description: Suggest an idea or improvement for SwayDeck
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Please describe the problem first, then the feature.
+  - type: dropdown
+    id: part
+    attributes:
+      label: Which part does this relate to?
+      options:
+        - SwayDeck agent (PC side)
+        - SwayDeck Bridge (VS Code extension)
+        - Phone web app / PWA
+        - Docs
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: What are you trying to do that is hard or impossible today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like SwayDeck to do?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: input
+    id: windows-version
+    attributes:
+      label: Windows version (optional)
+      placeholder: e.g. Windows 11 23H2
+    validations:
+      required: false
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version (optional)
+      placeholder: v18.20.4
+    validations:
+      required: false

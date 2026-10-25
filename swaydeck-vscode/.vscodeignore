@@ -1,0 +1,29 @@
+# Files that must NOT go into the .vsix.
+# Anything not listed here (plus the defaults) is included, so the package keeps
+# only: out/ (compiled code), media/, README.md, LICENSE, CHANGELOG.md and
+# package.json, plus the production dependency node_modules/ws (vsce adds and
+# prunes node_modules itself — do not ignore node_modules here).
+
+# Sources and build config
+src/**
+tsconfig.json
+**/*.map
+
+# Dev / editor noise
+.vscode/**
+.gitignore
+.git/**
+.github/**
+
+# Lockfile and previously built packages
+package-lock.json
+*.vsix
+
+# Tests (if any are added later)
+test/**
+**/*.test.js
+**/*.test.ts
+
+# Design sources
+design/**
+designs/**

@@ -1,0 +1,87 @@
+name: Bug report
+description: Report something that is broken in SwayDeck
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please fill in the fields below so it can be
+        reproduced. For security problems, do **not** use this form — see
+        SECURITY.md instead.
+  - type: dropdown
+    id: part
+    attributes:
+      label: Which part is affected?
+      options:
+        - SwayDeck agent (PC side)
+        - SwayDeck Bridge (VS Code extension)
+        - Phone web app / PWA
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: swaydeck-version
+    attributes:
+      label: SwayDeck version
+      description: Agent version and/or extension version (e.g. 0.1.0)
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: windows-version
+    attributes:
+      label: Windows version
+      placeholder: e.g. Windows 11 23H2 (build 22631)
+    validations:
+      required: true
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version
+      description: Output of `node -v`
+      placeholder: v18.20.4
+    validations:
+      required: true
+  - type: input
+    id: phone-browser
+    attributes:
+      label: Phone / Chrome version
+      description: Phone model and Chrome version
+      placeholder: e.g. Pixel 7, Chrome 126
+    validations:
+      required: false
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What you did, in order.
+      placeholder: |
+        1. Start the agent with `npm start`
+        2. Run `npm run pair`
+        3. Tap "Run project"
+        4. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Agent console output and/or the `SwayDeck` output channel from VS Code.
+        Remove your pairing token before pasting.
+      render: text
+    validations:
+      required: false

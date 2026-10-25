@@ -1,0 +1,1867 @@
+/* =========================================================
+   SwayDeck — landscape deck UI
+   "Hardware deck": calm neutral surfaces, chunky tactile keys
+   with real physical depth, colour used only with purpose.
+   No external fonts, icons or stylesheets.
+
+   Colours are defined exactly once in :root. Nothing below
+   hard-codes a hex value outside that block.
+   ========================================================= */
+
+/* ---------- Self-hosted fonts (no CDN) ---------- */
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* =========================================================
+   Tokens
+   ========================================================= */
+:root {
+  /* Surfaces */
+  --canvas: #0b0b0f;
+  --rail: #0d0d12;
+  --tile: #17171d;
+  --tile-hi: #1d1d25;
+  --line: rgba(255, 255, 255, 0.06);
+  --line-2: rgba(255, 255, 255, 0.11);
+
+  /* Text */
+  --text: #f2f2f5;
+  --muted: #9a9aa8;
+  --dim: #5d5d6b;
+
+  /* Accents — one per function, used for icon tint, active
+     state and a soft tint on the pressed key only. */
+  --acc-pc: #5b8cff;
+  --acc-desk: #ffb547;
+  --acc-sys: #3ddc97;
+  --acc-proj: #a78bfa;
+  --acc-music: #ff6b9d;
+  --primary: #5b8cff; /* default accent + long-break colour used by app.js */
+
+  /* Status */
+  --ok: #3ddc97;
+  --warn: #ffb547;
+  --crit: #ff5d6c;
+
+  /* Type */
+  --font-head: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+  --fs-1: 11px;  /* labels  */
+  --fs-2: 13px;  /* body    */
+  --fs-3: 16px;  /* titles  */
+  --fs-4: 28px;  /* stats   */
+
+  /* Geometry — 4px grid: 8 / 12 / 16 / 24 only */
+  --r-tile: 20px;
+  --r-bay: 12px;
+  --r-pill: 999px;
+  --tap: 48px;
+  --tap2: 44px;
+  --gap: 12px;
+  --pad: 16px;
+
+  /* Depth — a lit top edge and a hard offset foot, never a blur */
+  --toplight: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 45%);
+  --hl: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --depth: 0 2px 0 rgba(0, 0, 0, 0.55);
+  --depth-0: 0 0 0 rgba(0, 0, 0, 0);
+
+  /* Inline clipboard glyph for the empty state (no external asset) */
+  --i-clipboard: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='2' width='8' height='4' rx='1'/%3E%3Cpath d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/%3E%3C/svg%3E");
+
+  /* Inline status glyphs for the run result row (no external asset) */
+  --i-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  --i-warn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 2 20h20z'/%3E%3Cpath d='M12 9v5'/%3E%3Cpath d='M12 17h.01'/%3E%3C/svg%3E");
+  --i-cross: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6 6 18'/%3E%3Cpath d='M6 6l12 12'/%3E%3C/svg%3E");
+  --i-info: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5'/%3E%3Cpath d='M12 8h.01'/%3E%3C/svg%3E");
+
+  /* current screen accent (overridden per screen / rail key) */
+  --acc: var(--primary);
+}
+
+/* One accent per function */
+#screen-pc,     .railbtn[data-screen="pc"],     .mtile[data-screen="pc"]     { --acc: var(--acc-pc); }
+#screen-desk,   .railbtn[data-screen="desk"],   .mtile[data-screen="desk"]   { --acc: var(--acc-desk); }
+#screen-system, .railbtn[data-screen="system"], .mtile[data-screen="system"] { --acc: var(--acc-sys); }
+#screen-dev,    .railbtn[data-screen="dev"],    .mtile[data-screen="dev"]    { --acc: var(--acc-proj); }
+#screen-music,  .railbtn[data-screen="music"],  .mtile[data-screen="music"]  { --acc: var(--acc-music); }
+#screen-home,   .railbtn[data-screen="home"]                                  { --acc: var(--primary); }
+
+/* =========================================================
+   Base
+   ========================================================= */
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0;
+  overflow: hidden;
+  background: var(--canvas);
+}
+
+body {
+  display: flex;
+  color: var(--text);
+  font-family: var(--font-head);
+  font-size: var(--fs-2);
+  font-weight: 500;
+  line-height: 1.35;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, a { font: inherit; color: inherit; }
+svg { display: block; }
+
+/* Numerals only ever use the mono face, always tabular. */
+#clock, .clockdate, .chipclock, .latency, .pomometa, .ringtime,
+.statbig, .statmeta, .stepval, .snipmeta, .snip .txt, .fcard, .flipdate {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Status utilities shared by app.js (setStatus / renderState).
+   "off" is deliberately calm rather than alarming. */
+.on  { color: var(--ok) !important; }
+.off { color: var(--dim) !important; }
+
+/* =========================================================
+   Left rail — icon only, active key carries the accent
+   ========================================================= */
+#rail {
+  flex: none;
+  width: calc(64px + env(safe-area-inset-left, 0px));
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  /* The rail stacks the brand mark, six screen keys and Settings. At the
+     shortest supported height (320px) the fit is tight, so the gaps, the
+     padding and the brand mark all scale with the viewport while the keys
+     keep a real 40px target and Settings stays pinned to the bottom. */
+  gap: clamp(2px, 1vh, 8px);
+  padding: calc(clamp(3px, 1vh, 8px) + env(safe-area-inset-top, 0px)) 0
+           calc(clamp(3px, 1vh, 8px) + env(safe-area-inset-bottom, 0px))
+           env(safe-area-inset-left, 0px);
+  background: var(--rail);
+  border-right: 1px solid var(--line);
+}
+
+/* Brand mark: a 2x2 grid of rounded squares in the four accents.
+   Deliberately not a glyph, so it can never be confused with the
+   Home key, and never interactive. */
+.railbrand {
+  flex: none;
+  /* The brand mark scales with the viewport height so the rail can still
+     stack the mark, the six keys and Settings at 320px without clipping. */
+  width: clamp(18px, 6vh, 28px);
+  height: clamp(18px, 6vh, 28px);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: clamp(2px, 0.6vh, 3px);
+  padding: clamp(2px, 0.6vh, 3px);
+  border-radius: 9px;
+  background: var(--tile);
+}
+.railbrand span { border-radius: 3px; }
+.railbrand span:nth-child(1) { background: var(--acc-pc); }
+.railbrand span:nth-child(2) { background: var(--acc-desk); }
+.railbrand span:nth-child(3) { background: var(--acc-sys); }
+.railbrand span:nth-child(4) { background: var(--acc-music); }
+
+.railgroup {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Tightens on very short viewports, where every pixel of rail height is
+     needed to keep the Settings key on screen. */
+  gap: clamp(1px, 0.5vh, 2px);
+}
+.railbottom { margin-top: auto; }
+
+.railbtn {
+  position: relative;
+  width: 100%;
+  /* Never below a 40px target, but shrinks from 48px as the viewport gets
+     shorter so nothing at the bottom of the rail is clipped. */
+  height: clamp(40px, 9vh, 48px);
+  min-height: clamp(40px, 9vh, 48px);
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-bay);
+  background: transparent;
+  color: var(--dim);
+  transition: color 160ms ease, background 160ms ease;
+}
+.railbtn svg { width: 20px; height: 20px; }
+.railbtn.active {
+  background: var(--toplight), var(--tile);
+  box-shadow: var(--hl), var(--depth);
+  color: var(--acc);
+}
+.railbtn.active::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 22px;
+  border-radius: 2px;
+  background: var(--acc);
+}
+
+/* =========================================================
+   Main column
+   ========================================================= */
+#main {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) 0;
+  background: var(--canvas);
+}
+
+/* ---------- Header: quiet chips only ---------- */
+#hdr {
+  flex: none;
+  height: 40px;
+  padding: 0 var(--pad);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.hdrsides {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  color: var(--muted);
+  font-size: var(--fs-1);
+  font-weight: 500;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chip.on::before,
+.chip.off::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.chip.conn { color: var(--text); }
+.chip.conn .statusText { overflow: hidden; text-overflow: ellipsis; }
+.chip.quiet { background: none; color: var(--dim); }
+.chip.chipclock { background: none; color: var(--text); font-weight: 600; }
+.chip.latency { background: none; color: var(--muted); }
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+.dot.on { background: var(--ok); }
+.dot.off { background: var(--crit); }
+/* Gentle pulse while the socket is still connecting */
+.dot:not(.on):not(.off) { animation: dotPulse 1.4s ease-in-out infinite; }
+
+.extdot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+.extdot.on { background: var(--ok); }
+.extdot.off { background: var(--dim); }
+
+.hdrbtn {
+  flex: none;
+  height: 30px;
+  min-width: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--toplight), var(--tile);
+  color: var(--muted);
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+.hdrbtn svg { width: 15px; height: 15px; }
+.hdrbtn:active { transform: translateY(2px); }
+.hdrbtn .fsOut { display: none; }
+body.fs-on .hdrbtn .fsIn { display: none; }
+body.fs-on .hdrbtn .fsOut { display: block; }
+
+/* =========================================================
+   Screens
+   ========================================================= */
+#bay {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: var(--pad);
+}
+.screen.active {
+  display: flex;
+  animation: screenIn 180ms ease-out both;
+}
+
+/* ---------- shared text ---------- */
+.collabel {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--dim);
+}
+.hint {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.tbadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--dim);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.tbadge.ok { color: var(--ok); border-color: rgba(61, 220, 151, 0.35); }
+.tbadge.warn { color: var(--warn); border-color: rgba(255, 181, 71, 0.35); }
+.tbadge.crit { color: var(--crit); border-color: rgba(255, 93, 108, 0.35); }
+/* No reading yet: the badge stays out of the layout entirely instead of
+   showing a "--" chip. setBadge() rewrites the whole class list, so the
+   first real stats message replaces "pending" with the real level. */
+.tbadge.pending { display: none; }
+
+/* =========================================================
+   HOME
+   ========================================================= */
+.homehero {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+.brandline {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.hint#statusHint {
+  flex: 1 1 auto;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tile5row {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--gap);
+}
+
+.mtile {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 8px;
+  padding: var(--pad);
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--r-tile);
+  background: var(--toplight), var(--tile);
+  box-shadow: var(--hl), var(--depth);
+  color: var(--text);
+  overflow: hidden;
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+.mtile:active { transform: translateY(2px); box-shadow: var(--hl), var(--depth-0); }
+
+/* The icon is the hero: it fills the free space above the labels and
+   carries a soft accent-tinted glow, so the tile is not mostly empty. */
+.mtile .ti {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  justify-self: center;
+  align-self: center;
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--acc);
+}
+.mtile .ti::before {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--acc) 0%, transparent 68%);
+  opacity: 0.22;
+  filter: blur(6px);
+}
+.mtile .ti svg { width: 28px; height: 28px; }
+.mtile .tbadge { grid-column: 3; grid-row: 1; align-self: center; justify-self: end; }
+.mtile .extdot { grid-column: 2; grid-row: 1; align-self: center; justify-self: end; margin-right: 6px; }
+
+.mtile .tbody {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  align-self: end;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.mtile .ttitle {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.mtile .tsub {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mtile .minibar {
+  grid-column: 1 / -1;
+  grid-row: 4;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-2);
+  overflow: hidden;
+}
+.mtile .minibar > i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 2px;
+  background: var(--acc);
+  transition: width 300ms ease-out, background 300ms ease-out;
+}
+
+/* =========================================================
+   PC CONTROL
+   ========================================================= */
+.baybody {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: var(--gap);
+}
+
+.col {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.colwide { flex: 1.5 1 0; }
+
+.colhead {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 16px;
+}
+
+.colstack {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  gap: 8px;
+}
+.colstack.r4 { grid-template-rows: repeat(4, minmax(0, 1fr)); }
+.colstack.r2 { grid-template-rows: repeat(2, minmax(0, 1fr)); }
+
+.row3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  min-height: 0;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 10px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-tile);
+  background: var(--toplight), var(--tile);
+  box-shadow: var(--hl), var(--depth);
+  color: var(--text);
+  overflow: hidden;
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+.tile:active:not(:disabled) { transform: translateY(2px); box-shadow: var(--hl), var(--depth-0); }
+/* flex:none is load-bearing: the tile is a column flex box with
+   overflow:hidden, so a shrinkable icon is squashed on the main axis
+   whenever the content is a little tall. Every tile icon keeps its
+   drawn size and matches its neighbours exactly. */
+.tile svg { flex: none; width: 22px; height: 22px; color: var(--acc); }
+.tile .tl {
+  font-size: var(--fs-2);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+.tile .tsm {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--muted);
+  text-align: center;
+}
+.tile:disabled { opacity: 0.45; }
+
+/* Two-step "Sleep PC": the key lights up and swallows its own label */
+.tile.armed {
+  background: var(--toplight), var(--crit);
+  border-color: transparent;
+  color: var(--canvas);
+}
+.tile.armed svg,
+.tile.armed .tsm { color: var(--canvas); }
+
+/* =========================================================
+   SMART DESK
+   ========================================================= */
+.deskwrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  /* The timer side needs the extra width so "Pause 24:57" and the
+     four state pills can never wrap. */
+  grid-template-columns: minmax(0, 1.28fr) minmax(0, 1fr);
+  gap: var(--gap);
+}
+
+.deskleft { justify-content: flex-start; }
+
+.clockblock {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.clocktop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.clockbig {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-4);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  cursor: pointer;
+}
+.clockbig small {
+  font-size: 0.42em;
+  font-weight: 500;
+  color: var(--muted);
+}
+.clockdate {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.iconbtn {
+  flex: none;
+  width: var(--tap2);
+  height: var(--tap2);
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-bay);
+  background: var(--toplight), var(--tile);
+  box-shadow: var(--hl), var(--depth);
+  color: var(--muted);
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+.iconbtn svg { width: 18px; height: 18px; }
+.iconbtn:active { transform: translateY(2px); box-shadow: var(--hl), var(--depth-0); }
+
+/* The flip-clock key names itself, so it can never be mistaken for the
+   header's page-fullscreen key (which keeps the expand glyph). */
+.iconbtn.clockflip {
+  width: auto;
+  min-width: var(--tap2);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.iconbtn.clockflip svg { width: 16px; height: 16px; }
+
+/* --- Pomodoro is the hero of this screen --- */
+.pomowrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ringbox {
+  position: relative;
+  flex: none;
+  aspect-ratio: 1;
+  width: min(42%, 100%);
+  max-height: 100%;
+}
+.ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  /* Decorative: it must never swallow a tap on the controls beside it. */
+  pointer-events: none;
+}
+.ringtrack { fill: none; stroke: var(--line-2); stroke-width: 8; }
+.ringprog {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 300ms ease-out, stroke 300ms ease-out;
+}
+.ringcenter {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+  padding: 12%;
+}
+.ringlabel {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--muted);
+}
+.ringtime {
+  font-size: clamp(20px, 6.4vh, 34px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+#pomowrap.p-focus .ringprog { stroke: var(--ok); }
+#pomowrap.p-short .ringprog { stroke: var(--warn); }
+#pomowrap.p-long .ringprog { stroke: var(--primary); }
+#pomowrap.paused .ringtime { opacity: 0.6; }
+
+.pomoside {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pomosidehead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+.pill {
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--dim);
+  font-size: var(--fs-1);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.pill.on {
+  color: var(--acc);
+  border-color: var(--acc);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.pomometa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.pomobtns {
+  margin-top: auto;
+  display: grid;
+  /* The main key stays on one line ("Pause 24:57") at every height. */
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 8px;
+}
+
+.pbtn {
+  display: grid;
+  place-items: center;
+  min-height: var(--tap);
+  padding: 8px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--r-bay);
+  background: var(--toplight), var(--acc);
+  box-shadow: var(--hl), var(--depth);
+  color: var(--canvas);
+  font-size: clamp(11px, 3.1vh, 13px);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+.pbtn:active:not(:disabled) { transform: translateY(2px); box-shadow: var(--hl), var(--depth-0); }
+.pbtn.ghost {
+  background: var(--toplight), var(--tile);
+  border-color: var(--line);
+  color: var(--text);
+}
+.pbtn:disabled { opacity: 0.45; }
+
+/* --- Clipboard (secondary) --- */
+.deskright { min-width: 0; }
+
+/* The header used to repeat "Sync on" next to the "Sync: on" button.
+   The button is the single source of truth; the badge is only kept in
+   the DOM for app.js and stays invisible. */
+#clipState { display: none; }
+
+.cliprow {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.cliprow .pbtn { min-height: var(--tap2); font-size: var(--fs-1); white-space: nowrap; }
+
+#clipnote { margin: 0; }
+
+.cliplist {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 8px;
+  scrollbar-width: none;
+}
+.cliplist::-webkit-scrollbar { display: none; }
+
+.clipempty {
+  grid-column: 1 / -1;
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  padding: 24px 16px;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r-bay);
+  color: var(--dim);
+  font-size: var(--fs-1);
+  line-height: 1.45;
+  text-align: center;
+}
+.clipempty::before {
+  content: "";
+  width: 22px;
+  height: 22px;
+  background: currentColor;
+  -webkit-mask: var(--i-clipboard) center / contain no-repeat;
+  mask: var(--i-clipboard) center / contain no-repeat;
+}
+
+.snip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: var(--r-bay);
+  background: var(--toplight), var(--tile);
+  border: 1px solid var(--line);
+}
+/* The meta line ("4m ago · 11 chars") gets its own row and must never be
+   cut: it wraps instead of truncating. The delete key is absolutely
+   positioned in the top-right corner, so it is not part of this row's
+   flex flow and its width can never squeeze the meta text — the padding
+   only keeps the first line clear of the key. */
+.snipmeta {
+  min-width: 0;
+  padding-right: 40px;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--dim);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.snip .txt {
+  width: 100%;
+  min-height: var(--tap2);
+  max-height: 84px;
+  overflow: hidden;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--canvas);
+  color: var(--text);
+  font-size: var(--fs-1);
+  line-height: 1.4;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+/* Delete key: 32px visual so it sits inside the card padding and never
+   overlaps the meta line, with a 44px touch target on top of it. */
+.snip .del {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--tile-hi);
+  color: var(--muted);
+  font-size: var(--fs-2);
+  line-height: 1;
+}
+.snip .del::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
+/* =========================================================
+   SYSTEM MONITOR — the big numerals are the hero
+   ========================================================= */
+.syswrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.syshead {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap2);
+}
+.syshead .spacer { flex: 1 1 auto; }
+
+.btnmini {
+  flex: none;
+  min-height: var(--tap2);
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-bay);
+  background: var(--toplight), var(--tile);
+  box-shadow: var(--hl), var(--depth);
+  color: var(--text);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+.btnmini:active:not(:disabled) { transform: translateY(2px); box-shadow: var(--hl), var(--depth-0); }
+.btnmini:disabled { opacity: 0.45; }
+
+.cards4 {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gap);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: var(--pad);
+  border: 1px solid var(--line);
+  border-radius: var(--r-tile);
+  background: var(--toplight), var(--tile);
+  box-shadow: var(--hl), var(--depth);
+}
+
+.cardtop {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cardlabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--muted);
+}
+.cardlabel svg { width: 16px; height: 16px; color: var(--acc); }
+
+.cardmid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.statbig {
+  display: inline-block;
+  /* Scales with the viewport so "100%" and the longest uptime ("3d 13h")
+     always fit the card, and never wraps onto a second line. */
+  font-size: clamp(18px, 2.9vw, 28px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.stat { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.statmeta {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--dim);
+  overflow-wrap: anywhere;
+}
+.statmeta.strong {
+  color: var(--text);
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.bar {
+  flex: none;
+  height: 6px;
+  margin-top: auto;
+  border-radius: 3px;
+  background: var(--line-2);
+  overflow: hidden;
+}
+.bar .fill {
+  width: 0;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--ok);
+  transition: width 300ms ease-out, background 300ms ease-out;
+}
+
+.gaugesm {
+  flex: none;
+  width: clamp(34px, 9vh, 46px);
+  height: clamp(34px, 9vh, 46px);
+}
+.gaugesm svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.gaugeTrack { fill: none; stroke: var(--line-2); stroke-width: 3.8; }
+.gaugeProg {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 3.8;
+  stroke-linecap: round;
+  transition: stroke-dasharray 300ms ease-out, stroke 300ms ease-out;
+}
+
+/* Offline / waiting states */
+#statsBody.offline .statbig,
+#statsBody.offline .statmeta,
+#statsBody.offline .bar,
+#statsBody.offline .gaugesm { opacity: 0.35; }
+
+#statsBody.loading .statbig {
+  min-width: 84px;
+  height: 28px;
+  color: transparent;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.11) 37%, rgba(255, 255, 255, 0.05) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+#statsBody.loading .tbadge,
+#statsBody.loading .statmeta,
+#statsBody.loading .gaugesm { opacity: 0; }
+#statsBody.loading .bar .fill { width: 100%; background: rgba(255, 255, 255, 0.06); }
+
+/* The first real value arrives with a short tween */
+#statsBody:not(.loading) .statbig { animation: numIn 250ms ease-out; }
+
+/* =========================================================
+   PROJECT
+   ========================================================= */
+.projwrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--gap);
+}
+
+.projcard { justify-content: flex-start; }
+
+/* The workspace name is the card title; the connection is only a chip.
+   #ext keeps its id and its on/off class from app.js. */
+.wstop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.wsname {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.extline {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.extline.on { border-color: rgba(61, 220, 151, 0.35); }
+.extline.off { border-color: var(--line); }
+
+/* Subtitle under the workspace title: the project type plus, for a Node
+   workspace, whether a dev script was found. */
+.wssub {
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* "Detected": the real findings taken from the workspace details — a tick
+   for a file that is there, a dash for one that is not. No invented rows,
+   and the block takes no space at all while it is empty. */
+.detected {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.detected:empty { display: none; }
+.detrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--dim);
+}
+.detmark {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--dim);
+  font-size: 11px;
+  line-height: 1;
+}
+.detrow.ok .detmark { background: var(--ok); color: var(--canvas); }
+.detrow.ok .detmark::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background: currentColor;
+  -webkit-mask: var(--i-check) center / contain no-repeat;
+  mask: var(--i-check) center / contain no-repeat;
+}
+.detrow.ok .detlabel { color: var(--text); }
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+#projFile { color: var(--dim); }
+
+.btn {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  min-height: var(--tap);
+  padding: 12px var(--pad);
+  border: 1px solid var(--line);
+  border-radius: var(--r-bay);
+  background: var(--toplight), var(--tile);
+  box-shadow: var(--hl), var(--depth);
+  color: var(--text);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: var(--hl), var(--depth-0); }
+.btn:disabled { opacity: 0.45; }
+
+.btn.small {
+  min-height: var(--tap2);
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.btn.run {
+  /* About 40% of the screen height: the run key is the point of the screen. */
+  min-height: 40vh;
+  border-color: transparent;
+  background: var(--toplight), var(--acc);
+  color: var(--canvas);
+  font-size: var(--fs-3);
+  font-weight: 700;
+}
+
+/* The run result is a status row: icon first, then the message. */
+#runinfo {
+  margin: 0;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+#runinfo.ok,
+#runinfo.warn,
+#runinfo.fail {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+#runinfo.ok::before,
+#runinfo.warn::before,
+#runinfo.fail::before {
+  content: "";
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  background: currentColor;
+  -webkit-mask: var(--i-info) center / contain no-repeat;
+  mask: var(--i-info) center / contain no-repeat;
+}
+#runinfo.ok::before {
+  -webkit-mask-image: var(--i-check);
+  mask-image: var(--i-check);
+}
+#runinfo.warn::before {
+  -webkit-mask-image: var(--i-warn);
+  mask-image: var(--i-warn);
+}
+#runinfo.fail::before {
+  -webkit-mask-image: var(--i-cross);
+  mask-image: var(--i-cross);
+}
+#runinfo.ok { color: var(--ok); }
+#runinfo.fail { color: var(--crit); }
+#runinfo.warn { color: var(--warn); }
+
+.runopts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.optchip {
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+  font-size: var(--fs-1);
+  font-weight: 500;
+}
+
+.runurl {
+  display: block;
+  padding: 8px 10px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-bay);
+  background: var(--canvas);
+  color: var(--acc);
+  font-size: var(--fs-1);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   MUSIC
+   ========================================================= */
+.musicwrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.btn.musicopen {
+  width: min(420px, 100%);
+  min-height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-color: transparent;
+  background: var(--toplight), var(--acc);
+  color: var(--canvas);
+  font-size: var(--fs-3);
+  font-weight: 700;
+  /* It is a link, so every link state must stay un-underlined. */
+  text-decoration: none;
+}
+.btn.musicopen:link,
+.btn.musicopen:visited,
+.btn.musicopen:hover,
+.btn.musicopen:focus,
+.btn.musicopen:focus-visible { text-decoration: none; }
+.btn.musicopen:focus-visible {
+  outline: 2px solid var(--canvas);
+  outline-offset: 2px;
+  box-shadow: var(--hl), var(--depth-0), 0 0 0 4px rgba(255, 107, 157, 0.5);
+}
+.btn.musicopen:active {
+  transform: translateY(2px);
+  box-shadow: var(--hl), var(--depth-0);
+  filter: brightness(0.92);
+}
+.btn.musicopen svg { width: 22px; height: 22px; }
+
+.musichint {
+  margin: 0;
+  max-width: min(420px, 100%);
+  text-align: center;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* =========================================================
+   Panels (settings / timer settings)
+   ========================================================= */
+.panel {
+  position: fixed;
+  right: calc(env(safe-area-inset-right, 0px) + var(--pad));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--pad));
+  z-index: 65;
+  width: min(320px, 70vw);
+  max-height: calc(100% - 32px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: var(--pad);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-tile);
+  background: var(--toplight), var(--tile-hi);
+  box-shadow: var(--hl), 0 3px 0 rgba(0, 0, 0, 0.5);
+}
+.panelhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.panelrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panelrow .btn { flex: 1 1 0; width: auto; min-width: 0; }
+
+/* ---------------- Timer settings: centred modal ----------------
+   The layer is a fixed, full-screen grid that also covers the
+   header, so nothing behind it can be tapped or read. The scrim
+   is the dim backdrop; the card sits on top of it.
+   Landscape splits into two columns:
+     left  = presets + the three toggles
+     right = the four steppers, in a 2x2 grid of stacked bays.
+   #pomoPanel keeps its id and is still toggled with [hidden]. */
+.pomolayer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px)
+           calc(env(safe-area-inset-right, 0px) + 12px)
+           calc(env(safe-area-inset-bottom, 0px) + 12px)
+           calc(env(safe-area-inset-left, 0px) + 12px);
+}
+.pomoscrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 4, 7, 0.66);
+}
+.pomocard {
+  position: relative;
+  z-index: 1;
+  width: min(760px, 100%);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: var(--pad);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-tile);
+  background: var(--toplight), var(--tile-hi);
+  box-shadow: var(--hl), 0 3px 0 rgba(0, 0, 0, 0.5), 0 24px 70px rgba(0, 0, 0, 0.6);
+}
+.pomocols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+  align-items: start;
+  gap: var(--gap);
+}
+.pomocol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+/* The four steppers become a 2x2 grid of compact stacked bays, so
+   every control is reachable without scrolling at 915x360. */
+.pomocard .steplist {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.pomocard .steprow {
+  grid-template-columns: auto auto auto;
+  grid-template-rows: auto auto;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-bay);
+  background: var(--toplight), var(--tile);
+}
+.pomocard .stepname { grid-column: 1 / -1; text-align: center; }
+.pomocard .stepval { min-width: 40px; }
+
+.presetrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chipbtn {
+  min-height: var(--tap2);
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--toplight), var(--tile);
+  color: var(--muted);
+  font-size: var(--fs-1);
+  font-weight: 600;
+}
+.chipbtn.on {
+  color: var(--acc);
+  border-color: var(--acc);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.steplist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.steprow {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 8px;
+}
+.stepname {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--muted);
+}
+.stepbtn {
+  width: var(--tap2);
+  height: var(--tap2);
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-bay);
+  background: var(--toplight), var(--tile);
+  box-shadow: var(--hl), var(--depth);
+  color: var(--text);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  line-height: 1;
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+.stepbtn:active { transform: translateY(2px); box-shadow: var(--hl), var(--depth-0); }
+.stepval {
+  min-width: 52px;
+  text-align: center;
+  font-size: var(--fs-2);
+  font-weight: 700;
+}
+
+.togglerow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.toggbtn {
+  min-height: var(--tap2);
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-bay);
+  background: var(--toplight), var(--tile);
+  color: var(--muted);
+  font-size: var(--fs-1);
+  font-weight: 500;
+}
+
+/* =========================================================
+   Toast
+   ========================================================= */
+#toast {
+  position: fixed;
+  right: calc(env(safe-area-inset-right, 0px) + var(--pad));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--pad));
+  z-index: 60;
+  max-width: min(420px, 76vw);
+  padding: 8px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  background: var(--toplight), var(--tile-hi);
+  box-shadow: var(--hl), var(--depth);
+  color: var(--text);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 160ms ease, transform 160ms ease;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; transform: none; }
+#toast.ok { color: var(--ok); }
+#toast.fail { color: var(--crit); }
+
+/* =========================================================
+   Overlay (phase complete)
+   ========================================================= */
+#overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(11, 11, 15, 0.94);
+}
+#overlay > div {
+  width: min(440px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+#overlayTitle {
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+#overlaySub {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--muted);
+}
+.overlaybtns {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--gap);
+}
+.overlaybtns .btn:first-child {
+  border-color: transparent;
+  background: var(--toplight), var(--primary);
+  color: var(--canvas);
+  font-weight: 700;
+}
+
+/* =========================================================
+   Full-screen flip clock
+   ========================================================= */
+#flip {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--canvas);
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+}
+
+.flipface {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, 2.4vh, 22px);
+  transform: translate(0, 0);
+  transition: transform 1.2s ease;
+}
+
+.flipclock {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 1.2vw, 16px);
+}
+.flipgroup {
+  display: flex;
+  gap: 8px;
+}
+
+.fcard {
+  position: relative;
+  width: clamp(56px, 16.5vw, 158px);
+  height: min(60vh, 240px);
+  perspective: 900px;
+  font-weight: 700;
+}
+
+/* The hinge notch: a small bite taken out of each side of the card,
+   exactly on the split line. Both bites sit inside the card so the
+   clock never spills sideways however wide the digits get. */
+.fcard::before,
+.fcard::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 12px;
+  margin-top: -6px;
+  background: var(--canvas);
+  z-index: 6;
+  pointer-events: none;
+}
+.fcard::before { left: 0; border-radius: 0 6px 6px 0; }
+.fcard::after { right: 0; border-radius: 6px 0 0 6px; }
+
+.fhalf,
+.fflap {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  overflow: hidden;
+  background: var(--tile);
+  color: var(--text);
+}
+.fhalf > span,
+.fflap > span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 200%;
+  display: grid;
+  place-items: center;
+  font-size: clamp(52px, 46vh, 190px);
+  line-height: 1;
+}
+/* The resting halves need an explicit edge. Without one both halves
+   resolve to the card's top, so the bottom half's inward 2px hinge
+   shadow and its 0/0 radius landed on the top edge — the stray dark
+   line that crossed the card above the 14px corners. */
+.fhalf.ftop { top: 0; }
+.fhalf.fbot { top: 50%; }
+/* Top half a shade lighter than the bottom, a 2px darker hinge line
+   between them and a soft inner shadow falling away from the split.
+   Both the resting half and its flap must match: at rest the flap
+   covers the half exactly. */
+.fhalf.ftop,
+.fflap.ftop-flap {
+  background: var(--tile-hi);
+  border-radius: 14px 14px 0 0;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.75),
+              inset 0 -16px 22px -18px rgba(0, 0, 0, 0.9);
+}
+.fhalf.fbot,
+.fflap.fbot-flap {
+  background: var(--tile);
+  border-radius: 0 0 14px 14px;
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.8),
+              inset 0 16px 22px -18px rgba(0, 0, 0, 0.85);
+}
+.fhalf.ftop > span,
+.fflap.ftop-flap > span { top: 0; }
+.fhalf.fbot > span,
+.fflap.fbot-flap > span { bottom: 0; }
+
+.fflap {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+.ftop-flap { top: 0; transform-origin: 50% 100%; z-index: 3; }
+.fbot-flap { bottom: 0; transform-origin: 50% 0; z-index: 2; }
+
+.fcard.flipping .ftop-flap { animation: flipTop 280ms linear forwards; }
+.fcard.flipping .fbot-flap { animation: flipBottom 280ms linear 280ms forwards; }
+
+.flipclock.withsecs .fcard {
+  width: clamp(46px, 12.5vw, 118px);
+  height: min(48vh, 190px);
+}
+.flipclock.withsecs .fhalf > span,
+.flipclock.withsecs .fflap > span { font-size: clamp(40px, 38vh, 155px); }
+
+.flipsep {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 3vh, 26px);
+}
+.fdot {
+  width: clamp(8px, 1vw, 12px);
+  height: clamp(8px, 1vw, 12px);
+  border-radius: 50%;
+  background: var(--acc-desk);
+  animation: flipBlink 1s steps(1, end) infinite;
+}
+
+.flipampm {
+  align-self: center;
+  margin-left: 8px;
+  font-family: var(--font-head);
+  font-size: var(--fs-3);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--acc-desk);
+}
+
+.flipdate {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.flipctl {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: calc(env(safe-area-inset-right, 0px) + 12px);
+  display: flex;
+  gap: 10px;
+  transition: opacity 300ms ease;
+}
+.flipctl.hide { opacity: 0; pointer-events: none; }
+.fbtn {
+  min-height: var(--tap2);
+  min-width: var(--tap2);
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-bay);
+  background: var(--toplight), var(--tile);
+  box-shadow: var(--hl), var(--depth);
+  color: var(--text);
+  font-size: var(--fs-1);
+  font-weight: 600;
+}
+
+/* =========================================================
+   Motion
+   ========================================================= */
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to   { background-position: 0 0; }
+}
+
+@keyframes numIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes flipTop {
+  from { transform: rotateX(0); }
+  to   { transform: rotateX(-90deg); }
+}
+@keyframes flipBottom {
+  from { transform: rotateX(90deg); }
+  to   { transform: rotateX(0); }
+}
+@keyframes flipBlink {
+  0%, 49%  { opacity: 1; }
+  50%, 100% { opacity: 0.25; }
+}
+@keyframes digitFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Home keys arrive in a short stagger */
+#screen-home.active .mtile { animation: keyIn 240ms ease-out both; }
+#screen-home.active .mtile:nth-child(1) { animation-delay: 0ms; }
+#screen-home.active .mtile:nth-child(2) { animation-delay: 30ms; }
+#screen-home.active .mtile:nth-child(3) { animation-delay: 60ms; }
+#screen-home.active .mtile:nth-child(4) { animation-delay: 90ms; }
+#screen-home.active .mtile:nth-child(5) { animation-delay: 120ms; }
+
+@keyframes keyIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+  #screen-home.active .mtile,
+  #screen-home.active .mtile:nth-child(n) { animation: none; }
+  .screen.active { animation: none; }
+  .dot:not(.on):not(.off),
+  .fdot { animation: none; }
+  .fcard.flipping .ftop-flap,
+  .fcard.flipping .fbot-flap { display: none; animation: none; }
+  .fcard.fading .fhalf > span { animation: digitFade 300ms ease; }
+  .flipface { transition: none; }
+}
+
+/* =========================================================
+   Short landscape screens
+   ========================================================= */
+@media (max-height: 400px) {
+  :root {
+    --pad: 12px;
+    --gap: 8px;
+    --fs-4: 22px;
+  }
+  .brandline { font-size: var(--fs-2); }
+  .mtile .ttitle { font-size: var(--fs-2); }
+  /* The home tiles stay centred and keep their glow, just smaller.
+     .btn.run is left alone on purpose: it must stay ~40% of the
+     screen height at every height in the 360px-450px range. */
+  .mtile .ti { width: 40px; height: 40px; border-radius: 12px; }
+  .mtile .ti svg { width: 24px; height: 24px; }
+  .mtile .ti::before { inset: -9px; }
+  .panel { width: min(300px, 76vw); }
+  .flipampm { margin-left: 6px; }
+  .flipface { gap: 8px; }
+}

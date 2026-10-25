@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b0f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <title>SwayDeck</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ================= LEFT RAIL ================= -->
+  <nav id="rail" aria-label="Deck navigation">
+    <div class="railbrand" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="railgroup">
+      <button class="railbtn" type="button" data-screen="home" title="Home" aria-label="Home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      </button>
+      <button class="railbtn" type="button" data-screen="pc" title="PC Control" aria-label="PC Control">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </button>
+      <button class="railbtn" type="button" data-screen="desk" title="Smart Desk" aria-label="Smart Desk">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="2" x2="14" y2="2"/><line x1="12" y1="14" x2="15" y2="11"/><circle cx="12" cy="14" r="8"/></svg>
+      </button>
+      <button class="railbtn" type="button" data-screen="system" title="System" aria-label="System">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></svg>
+      </button>
+      <button class="railbtn" type="button" data-screen="dev" title="Project" aria-label="Project">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      </button>
+      <button class="railbtn" type="button" data-screen="music" title="Music" aria-label="Music">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      </button>
+    </div>
+
+    <div class="railgroup railbottom">
+      <button class="railbtn" type="button" id="railSettings" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><line x1="14" y1="2" x2="14" y2="6"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="16" y1="18" x2="16" y2="22"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ================= MAIN ================= -->
+  <div id="main">
+
+    <!-- ---------- Header (every screen) ---------- -->
+    <!-- data-allow-truncate marks the handful of controls that are meant to
+         clip with an ellipsis; the layout guard fails any other element. -->
+    <header id="hdr">
+      <div class="hdrsides">
+        <span class="chip conn" data-allow-truncate><span class="dot"></span><span class="statusText" data-allow-truncate>Connecting</span></span>
+        <span class="chip" id="hdrExt" data-allow-truncate>VS Code: not connected</span>
+        <span class="chip quiet" id="hdrProj" hidden data-allow-truncate></span>
+      </div>
+      <div class="hdrsides">
+        <span class="chip latency" id="hdrLat" hidden data-allow-truncate></span>
+        <span class="chip chipclock" id="hdrClock" data-allow-truncate>--:--</span>
+        <button class="hdrbtn" type="button" id="fsBtn" title="Fullscreen" aria-label="Fullscreen" aria-pressed="false">
+          <svg class="fsIn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          <svg class="fsOut" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div id="bay">
+
+      <!-- ============ HOME ============ -->
+      <section class="screen" id="screen-home">
+        <div class="homehero">
+          <h1 class="brandline">SwayDeck</h1>
+          <p id="statusHint" class="hint" data-allow-truncate></p>
+        </div>
+
+        <div class="tile5row">
+          <button class="mtile" type="button" data-screen="pc">
+            <span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+            <span class="tbadge" id="hpcBadge">Offline</span>
+            <span class="tbody">
+              <span class="ttitle">PC Control</span>
+              <span class="tsub" data-allow-truncate>Apps, volume, media</span>
+            </span>
+          </button>
+
+          <button class="mtile" type="button" data-screen="desk">
+            <span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="2" x2="14" y2="2"/><line x1="12" y1="14" x2="15" y2="11"/><circle cx="12" cy="14" r="8"/></svg></span>
+            <span class="tbadge" id="hdeskBadge">Idle</span>
+            <span class="tbody">
+              <span class="ttitle">Smart Desk</span>
+              <span class="tsub" id="sub-desk" data-allow-truncate>Pomodoro ready</span>
+            </span>
+            <span class="minibar"><i id="hdeskBar"></i></span>
+          </button>
+
+          <button class="mtile" type="button" data-screen="system">
+            <span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></svg></span>
+            <!-- No badge until the first real reading: setBadge() replaces the
+                 whole class list, so "pending" disappears with the first stats. -->
+            <span class="tbadge pending" id="hsysBadge">--</span>
+            <span class="tbody">
+              <span class="ttitle">System</span>
+              <span class="tsub" id="sub-system" data-allow-truncate>CPU, RAM, uptime</span>
+            </span>
+          </button>
+
+          <button class="mtile" type="button" data-screen="dev">
+            <span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
+            <span class="tbadge" id="hprojBadge">None</span>
+            <span class="extdot off" id="hprojDot"></span>
+            <span class="tbody">
+              <span class="ttitle">Project</span>
+              <span class="tsub" id="sub-dev" data-allow-truncate>VS Code offline</span>
+            </span>
+          </button>
+
+          <button class="mtile" type="button" data-screen="music">
+            <span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+            <span class="tbody">
+              <span class="ttitle">Music</span>
+              <span class="tsub" data-allow-truncate>Spotify Deck</span>
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ============ PC CONTROL ============ -->
+      <section class="screen" id="screen-pc">
+        <div class="baybody">
+          <section class="col">
+            <div class="colhead"><span class="collabel">Apps</span></div>
+            <div class="colstack r4">
+              <button class="tile act" type="button" data-action="open_vscode" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                <span class="tl">VS Code</span>
+              </button>
+              <button class="tile act" type="button" data-action="open_chrome" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" y1="8" x2="12" y2="8"/><line x1="3.95" y1="6.06" x2="8.54" y2="14"/><line x1="10.88" y1="21.94" x2="15.46" y2="14"/></svg>
+                <span class="tl">Chrome</span>
+              </button>
+              <button class="tile act" type="button" data-action="open_calculator" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"/></svg>
+                <span class="tl">Calculator</span>
+              </button>
+              <button class="tile act" type="button" id="openproj" data-action="open_project_in_vscode" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H18a2 2 0 0 1 2 2v2"/></svg>
+                <span class="tl">Open project</span>
+                <span class="tsm" id="openprojSub">No project open</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="col colwide">
+            <div class="colhead"><span class="collabel">Volume &amp; Media</span></div>
+            <div class="colstack r2">
+              <div class="row3">
+                <button class="tile act" type="button" data-action="volume_down" data-steps="5" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                  <span class="tl">Volume &minus;</span>
+                </button>
+                <button class="tile act" type="button" data-action="volume_mute" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>
+                  <span class="tl">Mute</span>
+                </button>
+                <button class="tile act" type="button" data-action="volume_up" data-steps="5" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                  <span class="tl">Volume +</span>
+                </button>
+              </div>
+              <div class="row3">
+                <button class="tile act" type="button" data-action="media_prev" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+                  <span class="tl">Previous</span>
+                </button>
+                <button class="tile act" type="button" data-action="media_play_pause" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></svg>
+                  <span class="tl">Play / Pause</span>
+                </button>
+                <button class="tile act" type="button" data-action="media_next" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                  <span class="tl">Next</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="col colpower">
+            <div class="colhead"><span class="collabel">Power</span></div>
+            <div class="colstack r2">
+              <button class="tile act" type="button" data-action="lock_pc" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span class="tl">Lock PC</span>
+                <span class="tsm">Immediately</span>
+              </button>
+              <button class="tile act" type="button" id="sleepBtn" data-action="sleep_pc" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                <span class="tl" id="sleepLabel">Sleep PC</span>
+                <span class="tsm" id="sleepSub">Tap twice to confirm</span>
+              </button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ============ SMART DESK ============ -->
+      <section class="screen" id="screen-desk">
+        <div class="deskwrap">
+          <section class="col deskleft">
+            <div class="clockblock">
+              <div class="clocktop">
+                <div id="clock" class="clockbig" role="button" tabindex="0" aria-label="Open full-screen clock">--:--</div>
+                <button class="iconbtn clockflip" type="button" id="clockExpand" title="Open flip clock" aria-label="Open flip clock">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+                  Flip clock
+                </button>
+              </div>
+              <div id="date" class="clockdate"></div>
+            </div>
+
+            <div class="pomowrap" id="pomowrap">
+              <div class="ringbox">
+                <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+                  <circle class="ringtrack" cx="60" cy="60" r="52"></circle>
+                  <circle class="ringprog" id="pomoRing" cx="60" cy="60" r="52"></circle>
+                </svg>
+                <div class="ringcenter">
+                  <div id="pomolabel" class="ringlabel">Focus</div>
+                  <div id="pomotime" class="ringtime">25:00</div>
+                </div>
+              </div>
+
+              <div class="pomoside">
+                <div class="pomosidehead">
+                  <span class="collabel">Pomodoro</span>
+                  <button class="iconbtn" type="button" id="pomoSettings" title="Timer settings" aria-label="Timer settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><line x1="14" y1="2" x2="14" y2="6"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="16" y1="18" x2="16" y2="22"/></svg>
+                  </button>
+                </div>
+                <div class="pills" aria-hidden="true">
+                  <span class="pill" data-state="idle">Idle</span>
+                  <span class="pill" data-state="running">Active</span>
+                  <span class="pill" data-state="paused">Paused</span>
+                  <span class="pill" data-state="done">Done</span>
+                </div>
+                <div class="pomometa">
+                  <span id="pomoSession">Session 1/4</span>
+                  <span id="pomoToday">Today: 0 sessions</span>
+                </div>
+                <div class="pomobtns">
+                  <button class="pbtn" type="button" id="pomoMain">Start</button>
+                  <button class="pbtn ghost" type="button" id="pomoReset" disabled>Reset</button>
+                  <button class="pbtn ghost" type="button" id="pomoSkip" disabled>Skip</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="col deskright">
+            <div class="colhead">
+              <span class="collabel">Clipboard</span>
+              <span class="tbadge" id="clipState">Sync off</span>
+            </div>
+            <div class="cliprow">
+              <button class="pbtn ghost needconn" type="button" id="clipToggle" disabled>Sync: off</button>
+              <button class="pbtn needconn" type="button" id="clipGrab" disabled>Grab PC</button>
+              <button class="pbtn ghost needconn" type="button" id="clipClear" disabled>Clear</button>
+            </div>
+            <p id="clipnote" class="hint">Off by default. Only text you grab is saved, in memory only, and it is gone when the agent restarts. Passwords, keys, tokens, OTPs and card numbers are skipped.</p>
+            <div id="cliplist" class="cliplist"></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ============ SYSTEM MONITOR ============ -->
+      <section class="screen" id="screen-system">
+        <div class="syswrap">
+          <div class="syshead">
+            <span class="collabel">System</span>
+            <span class="chip" id="statsPoll" data-allow-truncate>Poll: --</span>
+            <span class="chip" data-allow-truncate><span id="statsAge">Waiting for stats...</span></span>
+            <span class="spacer"></span>
+            <span class="chip" id="sysLatWrap" hidden data-allow-truncate>Latency <span class="latency" id="sysLatency"></span></span>
+            <button class="btnmini" type="button" id="refreshStats" disabled>Refresh</button>
+          </div>
+
+          <div class="cards4 loading" id="statsBody">
+            <article class="card stat">
+              <div class="cardtop">
+                <span class="cardlabel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></svg>CPU</span>
+                <span class="tbadge" id="cpuBadge">--</span>
+              </div>
+              <div class="cardmid">
+                <span class="statbig" id="cpuVal">--</span>
+                <span class="gaugesm">
+                  <svg viewBox="0 0 36 36" aria-hidden="true">
+                    <circle class="gaugeTrack" cx="18" cy="18" r="15.9155"></circle>
+                    <circle class="gaugeProg" id="cpuGauge" cx="18" cy="18" r="15.9155"></circle>
+                  </svg>
+                </span>
+              </div>
+              <div class="bar"><div class="fill" id="cpuBar"></div></div>
+            </article>
+
+            <article class="card stat">
+              <div class="cardtop">
+                <span class="cardlabel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19v-3M10 19v-3M14 19v-3M18 19v-3M8 11V9M16 11V9M12 11V9M2 15h20M2 7a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>Memory</span>
+                <span class="tbadge" id="ramBadge">--</span>
+              </div>
+              <div class="cardmid">
+                <span class="statbig" id="ramVal">--</span>
+                <div class="stat">
+                  <span class="statmeta strong" id="ramMeta">-- / -- GB</span>
+                </div>
+              </div>
+              <div class="bar"><div class="fill" id="ramBar"></div></div>
+            </article>
+
+            <article class="card stat">
+              <div class="cardtop">
+                <span class="cardlabel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Uptime</span>
+              </div>
+              <div class="cardmid">
+                <span class="statbig" id="uptimeVal">--</span>
+              </div>
+              <span class="statmeta">Since the PC last booted</span>
+            </article>
+
+            <article class="card stat">
+              <div class="cardtop">
+                <span class="cardlabel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>Temperature</span>
+              </div>
+              <div class="cardmid">
+                <span class="statbig" id="tempVal">--</span>
+              </div>
+              <span class="statmeta" id="tempNote"></span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PROJECT ============ -->
+      <section class="screen" id="screen-dev">
+        <div class="projwrap">
+          <section class="col">
+            <div class="colhead"><span class="collabel">Workspace</span></div>
+            <div class="card projcard">
+              <div class="wstop">
+                <span class="wsname" id="proj" data-allow-truncate></span>
+                <span id="ext" class="extline off">VS Code: not connected</span>
+              </div>
+              <span class="wssub" id="projSub"></span>
+              <div class="badges">
+                <span class="tbadge" id="projTypeBadge">--</span>
+                <span class="tbadge" id="projTrustBadge">--</span>
+              </div>
+              <div class="detected" id="projDetected"></div>
+              <span class="statmeta" id="projFile"></span>
+            </div>
+          </section>
+
+          <section class="col">
+            <div class="colhead"><span class="collabel">Run</span></div>
+            <button class="btn run" type="button" id="run" disabled>Run project</button>
+            <button class="btn small" type="button" id="refresh" disabled>Refresh</button>
+            <p id="runinfo"></p>
+            <div class="runopts" id="runOptions"></div>
+            <a class="runurl" id="runUrl" hidden target="_blank" rel="noopener"></a>
+          </section>
+        </div>
+      </section>
+
+      <!-- ============ MUSIC ============ -->
+      <section class="screen" id="screen-music">
+        <div class="musicwrap">
+          <a class="btn musicopen" id="musicLink" href="https://swayam31220.github.io/Spotify-Deck/" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            Open Spotify Deck
+          </a>
+          <p class="musichint">Opens your Spotify Deck page in a new tab</p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS PANEL ============ -->
+  <div class="panel" id="settingsPanel" hidden>
+    <div class="panelhead">
+      <span class="collabel">Settings</span>
+      <button class="btnmini" type="button" id="settingsClose">Close</button>
+    </div>
+    <div class="panelrow">
+      <span class="collabel">Host</span>
+      <span class="chip" id="hostChip" data-allow-truncate>--</span>
+    </div>
+    <div class="panelrow"><button class="btn small" type="button" id="haptic">Haptic: on</button></div>
+    <div class="panelrow"><button class="btn small" type="button" id="awake">Screen awake: off</button></div>
+    <div class="panelrow"><button class="btn small" type="button" id="fsSet" hidden>Fullscreen</button></div>
+    <div class="panelrow"><button class="btn small" type="button" id="ping" disabled>Test connection</button></div>
+  </div>
+
+  <!-- ============ POMODORO SETTINGS (centred modal) ============ -->
+  <div class="pomolayer" id="pomoPanel" hidden>
+    <div class="pomoscrim" aria-hidden="true"></div>
+    <div class="pomocard">
+      <div class="panelhead">
+        <span class="collabel">Timer settings</span>
+        <button class="btnmini" type="button" id="pomoPanelClose">Close</button>
+      </div>
+
+      <div class="pomocols">
+        <div class="pomocol">
+          <div class="presetrow">
+            <button class="chipbtn" type="button" data-preset="classic">Classic 25/5/15</button>
+            <button class="chipbtn" type="button" data-preset="deep">Deep 50/10/20</button>
+            <button class="chipbtn" type="button" data-preset="custom">Custom</button>
+          </div>
+
+          <div class="togglerow">
+            <button class="toggbtn" type="button" id="pomoAuto">Auto-start: off</button>
+            <button class="toggbtn" type="button" id="pomoSound">Sound: on</button>
+            <button class="toggbtn" type="button" id="pomoVibrate">Vibrate: on</button>
+          </div>
+        </div>
+
+        <div class="steplist">
+          <div class="steprow">
+            <span class="stepname">Focus</span>
+            <button class="stepbtn" type="button" data-dec="focus" aria-label="Less focus time">&minus;</button>
+            <span class="stepval" id="valFocus">25m</span>
+            <button class="stepbtn" type="button" data-inc="focus" aria-label="More focus time">+</button>
+          </div>
+          <div class="steprow">
+            <span class="stepname">Short break</span>
+            <button class="stepbtn" type="button" data-dec="short" aria-label="Shorter short break">&minus;</button>
+            <span class="stepval" id="valShort">5m</span>
+            <button class="stepbtn" type="button" data-inc="short" aria-label="Longer short break">+</button>
+          </div>
+          <div class="steprow">
+            <span class="stepname">Long break</span>
+            <button class="stepbtn" type="button" data-dec="long" aria-label="Shorter long break">&minus;</button>
+            <span class="stepval" id="valLong">15m</span>
+            <button class="stepbtn" type="button" data-inc="long" aria-label="Longer long break">+</button>
+          </div>
+          <div class="steprow">
+            <span class="stepname">Sessions</span>
+            <button class="stepbtn" type="button" data-dec="sessions" aria-label="Fewer sessions">&minus;</button>
+            <span class="stepval" id="valSessions">4</span>
+            <button class="stepbtn" type="button" data-inc="sessions" aria-label="More sessions">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="overlay" hidden>
+    <div>
+      <h1 id="overlayTitle">Focus complete</h1>
+      <p id="overlaySub"></p>
+      <div class="overlaybtns">
+        <button class="btn" type="button" id="overlayOk">Start</button>
+        <button class="btn small" type="button" id="overlayDismiss">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FULL-SCREEN FLIP CLOCK ============ -->
+  <div id="flip" hidden>
+    <div class="flipface" id="flipFace">
+      <div class="flipclock" id="flipClock">
+        <div class="flipgroup">
+          <div class="fcard" id="fh1">
+            <div class="fhalf ftop"><span>0</span></div>
+            <div class="fhalf fbot"><span>0</span></div>
+            <div class="fflap ftop-flap"><span>0</span></div>
+            <div class="fflap fbot-flap"><span>0</span></div>
+          </div>
+          <div class="fcard" id="fh2">
+            <div class="fhalf ftop"><span>0</span></div>
+            <div class="fhalf fbot"><span>0</span></div>
+            <div class="fflap ftop-flap"><span>0</span></div>
+            <div class="fflap fbot-flap"><span>0</span></div>
+          </div>
+        </div>
+
+        <div class="flipsep" aria-hidden="true">
+          <span class="fdot"></span>
+          <span class="fdot"></span>
+        </div>
+
+        <div class="flipgroup">
+          <div class="fcard" id="fm1">
+            <div class="fhalf ftop"><span>0</span></div>
+            <div class="fhalf fbot"><span>0</span></div>
+            <div class="fflap ftop-flap"><span>0</span></div>
+            <div class="fflap fbot-flap"><span>0</span></div>
+          </div>
+          <div class="fcard" id="fm2">
+            <div class="fhalf ftop"><span>0</span></div>
+            <div class="fhalf fbot"><span>0</span></div>
+            <div class="fflap ftop-flap"><span>0</span></div>
+            <div class="fflap fbot-flap"><span>0</span></div>
+          </div>
+        </div>
+
+        <div class="flipsep" id="flipSepSec" hidden aria-hidden="true">
+          <span class="fdot"></span>
+          <span class="fdot"></span>
+        </div>
+
+        <div class="flipgroup" id="flipSecGroup" hidden>
+          <div class="fcard" id="fs1">
+            <div class="fhalf ftop"><span>0</span></div>
+            <div class="fhalf fbot"><span>0</span></div>
+            <div class="fflap ftop-flap"><span>0</span></div>
+            <div class="fflap fbot-flap"><span>0</span></div>
+          </div>
+          <div class="fcard" id="fs2">
+            <div class="fhalf ftop"><span>0</span></div>
+            <div class="fhalf fbot"><span>0</span></div>
+            <div class="fflap ftop-flap"><span>0</span></div>
+            <div class="fflap fbot-flap"><span>0</span></div>
+          </div>
+        </div>
+
+        <div class="flipampm" id="flipAmPm" hidden>AM</div>
+      </div>
+
+      <div class="flipdate" id="flipDate"></div>
+    </div>
+
+    <div class="flipctl" id="flipCtl">
+      <button class="fbtn" type="button" id="flipFmt">24h</button>
+      <button class="fbtn" type="button" id="flipSecs">Secs: off</button>
+      <button class="fbtn" type="button" id="flipClose" aria-label="Close clock">&#10005;</button>
+    </div>
+  </div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

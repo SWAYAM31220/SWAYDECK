@@ -1,0 +1,16 @@
+{
+  "name": "swaydeck",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SwayDeck monorepo root. The shipped pieces are swaydeck-agent/ (Node.js PC agent) and swaydeck-vscode/ (SwayDeck Bridge extension). This root package only holds development tooling: the README screenshot generator.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "screenshots": "node scripts/screenshots.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

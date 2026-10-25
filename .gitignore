@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+out/
+dist/
+
+# Packaged extensions
+*.vsix
+
+# Secrets and local config
+.swaydeck-token
+.env
+
+# Design sources (not part of the shipped app)
+design/
+# The design folder in this repo is actually named "designs" (plural)
+designs/
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
