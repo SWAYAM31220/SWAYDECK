@@ -389,15 +389,15 @@ token or project is captured:
 
 | Home | PC control | Smart Desk |
 | --- | --- | --- |
-| ![Home hub](docs/screenshots/01-home.png) | ![PC control](docs/screenshots/02-pc-control.png) | ![Smart Desk](docs/screenshots/04-smart-desk.png) |
+| ![Home hub](docs/screenshots/01b-home.png) | ![PC control](docs/screenshots/02b-pc-control.png) | ![Smart Desk](docs/screenshots/04b-smart-desk.png) |
 
 | Sleep confirmation | Timer settings | Flip clock |
 | --- | --- | --- |
-| ![Sleep confirmation](docs/screenshots/03-sleep-confirm.png) | ![Pomodoro settings](docs/screenshots/05-pomodoro-settings.png) | ![Flip clock](docs/screenshots/06-flip-clock.png) |
+| ![Sleep confirmation](docs/screenshots/03b-sleep-confirm.png) | ![Pomodoro settings](docs/screenshots/05b-pomodoro-settings.png) | ![Flip clock](docs/screenshots/06b-flip-clock.png) |
 
 | System monitor | Project | Music |
 | --- | --- | --- |
-| ![System monitor](docs/screenshots/07-system-monitor.png) | ![Project](docs/screenshots/08-project.png) | ![Music](docs/screenshots/09-music.png) |
+| ![System monitor](docs/screenshots/07b-system-monitor.png) | ![Project](docs/screenshots/08b-project.png) | ![Music](docs/screenshots/09b-music.png) |
 
 ### Regenerating the screenshots
 
