@@ -81,13 +81,7 @@ The token is generated once and stored in `swaydeck-agent/.swaydeck-token`
 
 ## Install the extension
 
-From the Marketplace: install **SwayDeck Bridge** (`SwayamSujjalMohanta.swaydeck-bridge`).
-
-Or from a packaged `.vsix`:
-
-```powershell
-code --install-extension swaydeck-bridge-0.1.0.vsix
-```
+Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=SwayamSujjalMohanta.swaydeck-bridge).
 
 ## Pairing, step by step
 
