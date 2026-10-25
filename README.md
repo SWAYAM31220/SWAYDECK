@@ -58,6 +58,40 @@ The repository has two parts:
   <https://developer.android.com/tools/releases/platform-tools>
 - **VS Code** (only if you want the Project screen / running projects from the phone).
 
+## Quick start
+
+The short version. Each step is explained in detail further down.
+
+1. **Start the agent** (terminal 1, keep it open):
+
+   ```powershell
+   cd swaydeck-agent
+   npm install
+   npm start
+   ```
+
+2. **Pair the phone** (terminal 2, phone plugged in with USB debugging on):
+
+   ```powershell
+   cd swaydeck-agent
+   npm run pair
+   ```
+
+   The phone opens SwayDeck and the header shows **Connected**.
+
+3. **Install the VS Code extension** (optional, for the Project screen): install
+   **SwayDeck Bridge** from the Marketplace.
+4. **Give the extension the token**: copy it with the command below, then in VS
+   Code press `Ctrl+Shift+P`, run **SwayDeck: Set Pairing Token**, and paste.
+
+   ```powershell
+   # from swaydeck-agent/
+   powershell -NoProfile -Command "Get-Content .swaydeck-token | Set-Clipboard"
+   ```
+
+5. Open the **Project** screen on the phone. When it says **VS Code: connected**,
+   you are done.
+
 ## Install and run the agent
 
 ```powershell
@@ -76,14 +110,100 @@ To pair your phone, run this (keep the token private):
 adb shell am start -a android.intent.action.VIEW -d "http://localhost:3000/#t=<TOKEN>"
 ```
 
+Keep this terminal open while you use SwayDeck. Closing it stops the agent, and
+the phone shows **Offline**.
+
 The token is generated once and stored in `swaydeck-agent/.swaydeck-token`
 (git-ignored, never committed).
 
-## Install the extension
+## The pairing token
 
-Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=SwayamSujjalMohanta.swaydeck-bridge).
+### What it is
 
-## Pairing, step by step
+The pairing token is a long random secret that the agent creates the first time
+it starts and saves in `swaydeck-agent/.swaydeck-token`. The agent only talks to
+clients that present this exact token. Without it, a connection is rejected (the
+agent log shows `rejected unauthenticated client`). This keeps other apps and web
+pages on your PC or phone from controlling your computer.
+
+Two things need the token:
+
+| Who | How it gets the token | What you do |
+| --- | --- | --- |
+| **Phone** (SwayDeck web app) | From the pairing link (`...#t=<TOKEN>`). The page saves it in the phone browser's storage and removes it from the address bar. | Run `npm run pair`. You never type the token. |
+| **VS Code extension** | You paste it once. | Run **SwayDeck: Set Pairing Token** in VS Code and paste the token. |
+
+### How to get the token
+
+Run these from the `swaydeck-agent/` folder.
+
+- **Copy it to the clipboard without showing it on screen** (works in cmd and
+  PowerShell):
+
+  ```powershell
+  powershell -NoProfile -Command "Get-Content .swaydeck-token | Set-Clipboard"
+  ```
+
+- **Show it in the terminal:**
+
+  ```powershell
+  type .swaydeck-token
+  ```
+
+- Or open the file in Notepad: `notepad .swaydeck-token`.
+- Or copy it from the pairing command that `npm start` prints (it is the part after `#t=`).
+
+When you paste it, make sure there are no spaces or line breaks before or after it.
+
+### Keep it private
+
+- Never commit `.swaydeck-token`, paste it in issues or chats, or show it in
+  screenshots. Anyone who has the token and can reach the agent can control the
+  actions it offers.
+- The pairing command contains the token, so it also ends up in your terminal
+  history. Clear it if you share your screen or machine.
+
+### Resetting the token
+
+If the token leaked, or you just want a new one:
+
+1. Stop the agent (`Ctrl+C` in its terminal).
+2. Delete `swaydeck-agent/.swaydeck-token`.
+3. Start the agent again (`npm start`). It creates a new token. The old token stops
+   working immediately.
+4. Pair the phone again (`npm run pair`) and run **SwayDeck: Set Pairing Token**
+   again in VS Code with the new token.
+
+### When you need to pair again
+
+- You reset the token (above), or deleted `.swaydeck-token`.
+- You cleared the phone browser's site data for `localhost`, or switched to a new phone.
+- The phone says **Not paired**, or the agent log says `rejected unauthenticated client`.
+
+You do **not** need to pair again after a normal restart of the agent, replugging
+the cable (just re-run `npm run pair` to reopen the USB tunnel), or restarting VS Code.
+
+## Pair the phone
+
+You need the agent running (`npm start`, terminal 1) and the phone plugged in with
+USB debugging on. Run the commands below in a **second terminal**.
+
+### Option A: one command (recommended)
+
+```powershell
+cd swaydeck-agent
+npm run pair
+```
+
+This opens the USB tunnel (`adb reverse tcp:3000 tcp:3000`) and opens the pairing
+link, with the current token in it, on the phone. The phone stores the token from
+the URL and strips it from the address bar. SwayDeck opens and the header shows
+**Connected**.
+
+If it says adb was not found, install Android platform-tools and add it to your
+PATH (see Requirements).
+
+### Option B: manual steps
 
 1. On the phone, enable **Developer options → USB debugging** and plug it into the PC.
 2. Confirm the PC can see the phone:
@@ -105,23 +225,45 @@ Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/item
    adb shell am start -a android.intent.action.VIEW -d "http://localhost:3000/#t=<TOKEN>"
    ```
 
-   Steps 3 and 4 are exactly what `npm run pair` does for you:
+### If the link opens in a different browser
 
-   ```powershell
-   cd swaydeck-agent
-   npm run pair
-   ```
+The pairing link opens in the phone's default browser. SwayDeck is built for
+Chrome, so set **Chrome** as the default browser, then run `npm run pair` again.
+The token is stored in the browser that opened the link, so pair in the same
+browser you will use (and install the app from).
 
-   The phone stores the token from the URL hash and strips it from the address bar.
-   The agent must be running (`npm start`) for the phone to connect.
+## Install the extension
+
+Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=SwayamSujjalMohanta.swaydeck-bridge).
+
+### Connect the extension to the agent
+
+The extension needs the same token as the phone. You do this once:
+
+1. Copy the token (see [How to get the token](#how-to-get-the-token)).
+2. In VS Code press `Ctrl+Shift+P` (Command Palette).
+3. Run **SwayDeck: Set Pairing Token**.
+4. Paste the token and press Enter.
+
+With the agent running, the extension connects to `ws://127.0.0.1:3000/ext`. To
+check, open the **Project** screen on the phone. The chip shows **VS Code:
+connected** and the detected project appears.
+
+Only one VS Code window controls the deck at a time. If you open a second window,
+the older one shows `SwayDeck: Standby` until you focus it again (see
+Troubleshooting).
 
 ## Install as a fullscreen app
 
-1. Pair once (above) so Chrome has the site in its history.
+1. Pair once (above) so Chrome has stored the token.
 2. In Chrome on the phone, open the Chrome menu → **Add to Home screen** /
    **Install app**.
 3. Launch it from the home screen. The installed app runs fullscreen in landscape
    (from `manifest.webmanifest`: `display: fullscreen`, `orientation: landscape`).
+
+The USB tunnel must be open for the installed app to connect, so plug the phone in
+and run `npm run pair` (or `adb reverse tcp:3000 tcp:3000`) first. If the installed
+app says **Not paired**, open the pairing link in Chrome again with `npm run pair`.
 
 ## Usage per screen
 
@@ -194,11 +336,23 @@ See [SECURITY.md](SECURITY.md) for the threat model and how to report issues.
 
 ## Troubleshooting
 
+- **Agent log shows `rejected unauthenticated client`.** A client connected without
+  the correct token. If it is the phone, run `npm run pair` again from
+  `swaydeck-agent/` (with the agent running) so the phone gets the current token.
+  If you deleted `.swaydeck-token` or started a different copy of the agent, the
+  token changed, so both the phone and the extension need to be paired again. Make
+  sure only one agent is running (check port 3000, see below).
 - **"Not paired" / token mismatch / pairing failed.** The token in the phone's
   local storage must match `swaydeck-agent/.swaydeck-token`. Re-run `npm run pair`
   (or re-open the pairing URL), then in VS Code run **SwayDeck: Set Pairing Token**
   with the same token. After several wrong attempts the agent locks out for up to a
-  minute — wait and try again.
+  minute — wait and try again. If it still fails, clear the phone browser's site
+  data for `localhost` (Chrome → Settings → Site settings → All sites → `localhost`
+  → Clear & reset) and pair again.
+- **The phone shows "VS Code: not connected".** The extension is not connected to
+  the agent. Check that the agent is running, that you ran **SwayDeck: Set Pairing
+  Token** with the current token, and that the right VS Code window is focused (only
+  one window is active at a time).
 - **`adb devices` does not list the phone.** Use a data-capable cable, set the USB
   mode to File transfer, and accept the "Allow USB debugging" prompt on the phone.
 - **Phone connects, then loses the agent after replugging the cable.** `adb reverse`
